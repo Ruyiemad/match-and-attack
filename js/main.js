@@ -102,10 +102,13 @@ async function runRandomizer() {
   list.innerHTML = "";
   status.textContent = TXT.randomizerSpinning;
 
-  MA.wheel.render(s.teams);
-  await MA.wheel.spin();
-
+  // Decide the order FIRST, then spin the wheel to actually land on the
+  // first team — otherwise the pointer and the revealed order disagree.
   s.order = MA.util.shuffle(s.teams.map((_, i) => i));
+
+  MA.wheel.render(s.teams);
+  await MA.wheel.spin(s.teams.length, s.order[0]);
+
   status.textContent = TXT.randomizerDone;
 
   for (let r = 0; r < s.order.length; r++) {
