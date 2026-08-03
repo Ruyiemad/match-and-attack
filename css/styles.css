@@ -548,45 +548,53 @@ body {
 
 .board-controls { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; padding-bottom: 8px; }
 
-/* --------------------------- How to play ------------------------------ */
+/* --------------------------- How to play ------------------------------
+   Sized in vh as well as vw: this screen has to fit a projector without
+   scrolling, so every band shrinks on shorter viewports. */
+#screen-howto { gap: clamp(5px, 1.2vh, 16px); padding-block: clamp(8px, 1.4vh, 26px); }
+#screen-howto .screen-title { font-size: clamp(22px, 3.4vh, 38px); }
+
 .howto {
   width: min(940px, 94vw); text-align: start;
-  display: flex; flex-direction: column; gap: 20px; align-items: center;
+  display: flex; flex-direction: column; gap: clamp(8px, 1.5vh, 18px); align-items: center;
+  padding: clamp(14px, 2.2vh, 26px) clamp(16px, 2.4vw, 32px);
 }
-.howto-intro { font-size: clamp(17px, 2vw, 21px); font-weight: 700; line-height: 1.7; text-align: center; }
+.howto-intro { font-size: clamp(14px, 1.9vh, 19px); font-weight: 700; line-height: 1.55; text-align: center; }
 
 /* the two card types, drawn as real cards so they're recognised on the board */
-.howto-cards { display: flex; align-items: center; justify-content: center; gap: clamp(12px, 3vw, 34px); flex-wrap: wrap; }
-.howto-card { display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(210px, 40vw); }
+.howto-cards { display: flex; align-items: center; justify-content: center; gap: clamp(10px, 2.4vw, 28px); flex-wrap: wrap; }
+.howto-card { display: flex; flex-direction: column; align-items: center; gap: 7px; width: min(180px, 34vw); }
 /* undo the flip-card positioning: these are static, always-visible examples */
 .howto-cards .card-front.howto-face {
   position: static; transform: none;
   backface-visibility: visible; -webkit-backface-visibility: visible;
-  width: 100%; min-height: 210px; border-radius: var(--radius);
+  width: 100%; min-height: clamp(104px, 14.5vh, 170px); border-radius: var(--radius);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; padding: 14px; text-align: center; box-shadow: var(--shadow);
+  gap: 5px; padding: 10px; text-align: center; box-shadow: var(--shadow);
 }
-.howto-card figcaption { text-align: center; display: flex; flex-direction: column; gap: 3px; }
-.howto-card figcaption strong { font-size: clamp(17px, 2vw, 20px); color: var(--ink); }
-.howto-card figcaption span { font-size: clamp(13px, 1.5vw, 15px); font-weight: 700; color: var(--ink-soft); }
-.howto-vs { font-family: var(--font-brand); font-size: clamp(26px, 3.4vw, 40px); }
+.howto-card figcaption { text-align: center; display: flex; flex-direction: column; gap: 2px; }
+.howto-card figcaption strong { font-size: clamp(14px, 1.8vh, 18px); color: var(--ink); }
+.howto-card figcaption span { font-size: clamp(11.5px, 1.5vh, 14px); font-weight: 700; color: var(--ink-soft); }
+.howto-vs { font-family: var(--font-brand); font-size: clamp(20px, 3vh, 32px); }
 
-.howto-steps { list-style: none; counter-reset: hs; display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.howto-steps { list-style: none; counter-reset: hs; display: flex; flex-direction: column; gap: clamp(6px, 1vh, 10px); width: 100%; }
 .howto-steps li {
   counter-increment: hs; position: relative;
   background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-soft);
-  padding: 14px 18px; padding-inline-start: 58px;
-  font-size: clamp(15px, 1.8vw, 18px); font-weight: 700; line-height: 1.6; color: var(--ink);
+  padding: clamp(8px, 1.2vh, 12px) 16px; padding-inline-start: 50px;
+  font-size: clamp(13px, 1.75vh, 17px); font-weight: 700; line-height: 1.45; color: var(--ink);
 }
 .howto-steps li::before {
-  content: counter(hs); position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%);
-  width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--secondary); color: #fff; font-family: var(--font-brand); font-size: 17px;
+  content: counter(hs); position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--secondary); color: #fff; font-family: var(--font-brand); font-size: 15px;
 }
 .howto-end {
-  font-size: clamp(15px, 1.8vw, 19px); font-weight: 800; text-align: center; color: var(--defend-dark);
-  background: #edfbf3; border: 2px solid var(--defend); border-radius: var(--radius); padding: 12px 20px;
+  font-size: clamp(13px, 1.8vh, 17px); font-weight: 800; text-align: center; color: var(--defend-dark);
+  background: #edfbf3; border: 2px solid var(--defend); border-radius: var(--radius);
+  padding: clamp(8px, 1.1vh, 12px) 18px;
 }
+#btn-howto { font-size: clamp(18px, 2.4vh, 24px); padding: clamp(11px, 1.6vh, 17px) clamp(32px, 4vw, 44px); }
 
 /* ------------------------------ Results ------------------------------- */
 .winner-line { font-size: clamp(24px, 4vw, 40px); font-weight: 900; color: #fff; text-shadow: 0 4px 0 var(--gold), 0 10px 20px rgba(16,35,59,.3); }
