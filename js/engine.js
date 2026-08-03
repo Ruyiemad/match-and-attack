@@ -22,6 +22,9 @@ MA.engine = (function () {
   }
   const teamName = (i) => S().teams[i].name;
 
+  // Every phase change repaints the role circles in the question box.
+  function setPhase(p) { S().phase = p; renderRoles(); }
+
   /* ------------------------------ lifecycle --------------------------- */
   function startGame() {
     const s = S();
@@ -36,6 +39,9 @@ MA.engine = (function () {
 
   function beginTurn() {
     const s = S();
+    // The game is over when the board is cleared, or when we simply run out
+    // of questions — whichever comes first.
+    if (!CONFIG.reshuffleOnEmpty && MA.board.allLocked()) { endGame(); return; }
     if (s.questionIndex >= s.questions.length) { endGame(); return; }
     hideVerse();
 
@@ -52,6 +58,7 @@ MA.engine = (function () {
 
     if (skipped != null) {
       // Let the room see who lost their turn, then start the next team's turn.
+      setPhase("idle"); // clears the role circles while the message is up
       renderScoreboard();
       updateProgress();
       setBanner("turnSkipped", { team: teamName(skipped) }, "attack");
@@ -81,15 +88,18 @@ MA.engine = (function () {
     if (MA.board.hasFlippable()) {
       s.phase = "attack-await-flip";
       s.attackerIndex = chooseFairAttacker(s.currentTeamIndex);
+      renderScoreboard(); // re-render now that attackerIndex is known, so the attack badge shows
+      renderRoles();
       setBanner("attackBanner", { attacker: teamName(s.attackerIndex) }, "attack");
       MA.board.setEnabled(true);
       MA.board.setClickHandler(onAttackerFlip);
       showControls({ skip: true, start: false, next: false });
     } else {
       // board fully matched and no reshuffle -> straight to the question
-      s.phase = "question-ready";
+      setPhase("question-ready");
       setBanner("skipAttackBanner", {}, "");
       MA.board.setEnabled(false);
+      MA.quiz.showLockedPrompt();
       showControls({ skip: false, start: true, next: false });
     }
   }
@@ -98,7 +108,7 @@ MA.engine = (function () {
   function onAttackerFlip(idx, card) {
     const s = S();
     if (s.phase !== "attack-await-flip") return;
-    s.phase = "resolving";
+    setPhase("resolving");
     MA.board.setClickHandler(null);
     MA.board.setEnabled(false);
     showControls({ skip: false, start: false, next: false });
@@ -108,15 +118,16 @@ MA.engine = (function () {
       // fizzle: no effect, flip back and move on
       setBanner("attackFizzle", {}, "");
       MA.audio.play("block");
-      setTimeout(() => { MA.board.flipBack(idx); toQuestionReady(); }, 1800);
+      setTimeout(() => { MA.board.flipBack(idx); toQuestionReady(); }, 3200);
     } else {
       // attack card: the current team must now defend
       s.activeAttackCard = card;
       s.activeAttackCardIdx = idx;
+      renderRoles();
       setBanner("defenseBanner", { team: teamName(s.currentTeamIndex) }, "defend");
       MA.audio.play("attack");
       setTimeout(() => {
-        s.phase = "defense-await-flip";
+        setPhase("defense-await-flip");
         MA.board.setEnabled(true);
         MA.board.setClickHandler(onDefenderFlip);
       }, 700);
@@ -126,7 +137,7 @@ MA.engine = (function () {
   function onDefenderFlip(idx, card) {
     const s = S();
     if (s.phase !== "defense-await-flip") return;
-    s.phase = "resolving";
+    setPhase("resolving");
     MA.board.setClickHandler(null);
     MA.board.setEnabled(false);
     MA.board.flip(idx);
@@ -143,18 +154,22 @@ MA.engine = (function () {
         maybeReshuffle();
         s.pendingEffect = null;
         toQuestionReady();
-      }, 1300);
+      }, 2400);
     } else {
       s.pendingEffect = atk.effect || "skip";
-      shockwave();
       MA.audio.play("attack");
       setBanner("defenseFailed", { effect: effectText(s.pendingEffect, atk) }, "attack");
-      showVerse(atk);
-      setTimeout(() => {
-        MA.board.flipBack(idx);
-        if (s.activeAttackCardIdx != null) MA.board.flipBack(s.activeAttackCardIdx);
-        toQuestionReady();
-      }, 2100);
+      // Don't reveal the matching verse here — the pair isn't locked, so the
+      // same attack card can reappear and this would give away its answer.
+      // The two cards stay face-up until the room closes the punishment
+      // modal, then linger a beat longer so the mismatch can be studied.
+      shockwave(effectText(s.pendingEffect, atk), () => {
+        setTimeout(() => {
+          MA.board.flipBack(idx);
+          if (s.activeAttackCardIdx != null) MA.board.flipBack(s.activeAttackCardIdx);
+          toQuestionReady();
+        }, 1400);
+      });
     }
   }
 
@@ -187,7 +202,12 @@ MA.engine = (function () {
     // "skipNext" marks the attacked team to miss its NEXT turn (it still answers now)
     if (s.pendingEffect === "skipNext") s.teams[s.currentTeamIndex].mustSkip += 1;
 
+    // The punishment (if any) stays readable in the phase banner above —
+    // its text isn't overwritten again until beginQuestion() runs.
+    MA.quiz.showLockedPrompt(); // Start is now visible below
+
     renderScoreboard();
+    renderRoles();
     showControls({ skip: false, start: true, next: false });
   }
 
@@ -200,7 +220,7 @@ MA.engine = (function () {
     const effect = s.pendingEffect;
 
     if (effect === "skip") {
-      s.phase = "answered";
+      setPhase("answered");
       MA.quiz.showQuestion(q, { disabled: true });
       MA.quiz.forceReveal(q);
       setBanner("questionSkipped", {}, "attack");
@@ -210,7 +230,7 @@ MA.engine = (function () {
       return;
     }
 
-    s.phase = "question-live";
+    setPhase("question-live");
     let seconds = CONFIG.timerSeconds;
     if (effect === "cut") {
       const frac = (s.activeAttackCard && s.activeAttackCard.effectValue) || (CONFIG.effects.cut.fraction || 0.5);
@@ -227,7 +247,7 @@ MA.engine = (function () {
   function onAnswer(correct) {
     const s = S();
     if (s.phase !== "question-live") return;
-    s.phase = "answered";
+    setPhase("answered");
     let pts = correct ? CONFIG.points.correct : CONFIG.points.wrong;
     // "halfPoints" punishment: a correct answer is worth only half this round
     if (correct && s.pendingEffect === "halfPoints") pts = Math.round(pts * (CONFIG.effects.half.fraction || 0.5));
@@ -240,7 +260,7 @@ MA.engine = (function () {
   function onTimeUp(q) {
     const s = S();
     if (s.phase !== "question-live") return;
-    s.phase = "answered";
+    setPhase("answered");
     MA.quiz.forceReveal(q);
     addScore(s.answeringTeamIndex, CONFIG.points.wrong);
     MA.audio.play("wrong");
@@ -311,17 +331,24 @@ MA.engine = (function () {
     void el.offsetWidth; // restart the flash animation
   }
 
+  const ATTACK_PHASES = ["attack-await-flip", "defense-await-flip", "resolving"];
+
   function renderScoreboard() {
     const s = S();
     const el = document.getElementById("scoreboard");
     if (!el) return;
     const highlight = s.answeringTeamIndex != null ? s.answeringTeamIndex : s.currentTeamIndex;
+    const attackerVisible = s.attackerIndex != null && ATTACK_PHASES.indexOf(s.phase) !== -1;
     el.innerHTML = s.teams
-      .map((t, i) =>
-        `<div class="team-score${i === highlight ? " is-turn" : ""}" data-team="${i}" style="--c:${t.color}">` +
+      .map((t, i) => {
+        const cls = "team-score" +
+          (i === highlight ? " is-turn" : "") +
+          (attackerVisible && i === s.attackerIndex ? " is-attacker" : "");
+        return `<div class="${cls}" data-team="${i}" style="--c:${t.color}">` +
           `<div class="ts-name"><span>${escapeHtml(t.name)}</span></div>` +
           `<div class="ts-score">${t.score}</div>` +
-        "</div>")
+        "</div>";
+      })
       .join("");
   }
 
@@ -331,18 +358,95 @@ MA.engine = (function () {
     if (!el) return;
     const n = s.questions.length;
     const i = Math.min(s.questionIndex + 1, n);
-    const pct = n > 0 ? Math.round((s.questionIndex / n) * 100) : 0;
-    el.innerHTML =
-      `<div>${MA.util.fmt(TXT.progressLabel, { i, n })}</div>` +
-      `<div class="bar"><span style="width:${pct}%"></span></div>`;
+    el.textContent = MA.util.fmt(TXT.progressLabel, { i, n });
   }
 
-  function shockwave() {
+  /* --------------------- role circles (question box) ------------------- */
+  /* Two colored circles inside the question panel: which team must pick a
+     card right now, and which team answers. Captions change with the phase. */
+  function buildRoles(s) {
+    const C = s.currentTeamIndex;
+    const A = s.attackerIndex;
+    const answering = s.answeringTeamIndex != null ? s.answeringTeamIndex : C;
+    const atkRole = A != null ? { team: A, icon: "⚔️", label: TXT.roleAttacking } : null;
+
+    switch (s.phase) {
+      case "attack-await-flip":
+        return [
+          { team: C, icon: "✍️", label: TXT.roleWillAnswer },
+          A != null ? { team: A, icon: "⚔️", label: TXT.rolePickAttack, active: true } : null
+        ];
+
+      case "defense-await-flip":
+        return [
+          { team: C, icon: "🛡️", label: TXT.rolePickDefend, active: true },
+          atkRole
+        ];
+
+      case "resolving":
+        // mid-animation: same pair as the phase we came from
+        return s.activeAttackCard
+          ? [{ team: C, icon: "🛡️", label: TXT.rolePickDefend }, atkRole]
+          : [{ team: C, icon: "✍️", label: TXT.roleWillAnswer }, atkRole];
+
+      case "question-ready":
+      case "question-live":
+      case "answered":
+        return [
+          { team: answering, icon: "✍️",
+            label: s.phase === "question-ready" ? TXT.roleWillAnswer : TXT.roleAnswering, active: true },
+          A === answering
+            ? { team: C, icon: "💥", label: TXT.roleLostQuestion } // "steal": the question moved
+            : atkRole
+        ];
+
+      default:
+        return [];
+    }
+  }
+
+  function renderRoles() {
+    const s = S();
+    const el = document.getElementById("turn-roles");
+    if (!el) return;
+    const roles = buildRoles(s).filter((r) => r && r.team != null);
+    if (!roles.length) { el.hidden = true; el.innerHTML = ""; return; }
+    el.hidden = false;
+    el.innerHTML = roles
+      .map((r) => {
+        const t = s.teams[r.team];
+        return `<div class="role${r.active ? " is-active" : ""}" style="--c:${t.color}">` +
+          `<span class="role-dot">${r.icon}</span>` +
+          `<span class="role-team">${escapeHtml(t.name)}</span>` +
+          `<span class="role-label">${escapeHtml(r.label)}</span>` +
+        "</div>";
+      })
+      .join('<span class="role-vs" aria-hidden="true">VS</span>');
+  }
+
+  // Center-screen toast explaining WHY the team is being punished. Closed
+  // by the player (× button or clicking outside the card), not a timer —
+  // reading it is never rushed. onClose runs once, when it's dismissed.
+  function shockwave(effectDesc, onClose) {
     const d = document.createElement("div");
     d.className = "shockwave";
-    d.innerHTML = "<span>ATTACK!</span>";
+    d.innerHTML =
+      '<div class="shockwave-card">' +
+        '<button class="sw-close" aria-label="' + escapeHtml(TXT.closeLabel) + '">✕</button>' +
+        '<div class="sw-icon">💥</div>' +
+        '<div class="sw-title">' + escapeHtml(TXT.punishTitle) + "</div>" +
+        '<div class="sw-body">' + escapeHtml(TXT.punishBody) + "</div>" +
+        '<div class="sw-effect">' + escapeHtml(effectDesc) + "</div>" +
+      "</div>";
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      d.remove();
+      if (onClose) onClose();
+    };
+    d.addEventListener("click", (e) => { if (e.target === d || e.target.closest(".sw-close")) close(); });
     document.body.appendChild(d);
-    setTimeout(() => d.remove(), 1000);
   }
 
   // Reveal the full defend verse (with reference) when an attack resolves.
@@ -371,22 +475,33 @@ MA.engine = (function () {
   function endGame() {
     const s = S();
     MA.quiz.stopTimer();
-    s.phase = "results";
+    setPhase("results");
     MA.ui.showScreen("results");
 
     const ranked = s.teams.map((t, i) => ({ name: t.name, color: t.color, score: t.score, i })).sort((a, b) => b.score - a.score);
 
-    document.getElementById("winner-line").textContent = MA.util.fmt(TXT.winnerLabel, { team: ranked[0].name });
+    // Equal scores share a place (1, 1, 3, 4) — the game has no second
+    // metric that would fairly separate them, so we don't invent one.
+    let place = 0, prevScore = null;
+    ranked.forEach((t, i) => {
+      if (prevScore === null || t.score !== prevScore) { place = i + 1; prevScore = t.score; }
+      t.place = place;
+    });
+
+    const winners = ranked.filter((t) => t.place === 1);
+    document.getElementById("winner-line").textContent = winners.length > 1
+      ? MA.util.fmt(TXT.winnerTieLabel, { teams: winners.map((w) => w.name).join(TXT.tieJoiner) })
+      : MA.util.fmt(TXT.winnerLabel, { team: winners[0].name });
 
     const podium = document.getElementById("podium");
     podium.innerHTML = "";
-    ranked.forEach((t, rank) => {
+    ranked.forEach((t, i) => {
       const li = document.createElement("li");
-      li.dataset.place = String(rank + 1);
+      li.dataset.place = String(t.place);
       li.style.setProperty("--c", t.color);
-      li.style.animationDelay = rank * 0.12 + "s";
+      li.style.animationDelay = i * 0.12 + "s";
       li.innerHTML =
-        `<div class="p-rank">${rank + 1}</div>` +
+        `<div class="p-rank">${t.place}</div>` +
         `<div class="p-name">${escapeHtml(t.name)}</div>` +
         `<div class="p-score">${t.score}</div>`;
       podium.appendChild(li);

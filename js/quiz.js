@@ -82,8 +82,12 @@ MA.quiz = (function () {
     }, 1000);
   }
 
+  // Plain seconds countdown (20, 19, 18 …) — easier to read across a room
+  // than a clock, and every question is under a minute anyway.
+  function formatClock(s) { return String(Math.max(0, s)); }
+
   function update() {
-    $("timer-text").textContent = Math.max(0, remaining);
+    $("timer-text").textContent = formatClock(remaining);
     const frac = total > 0 ? remaining / total : 0;
     $("timer-arc").style.strokeDashoffset = String(CIRC * (1 - frac));
   }
@@ -100,13 +104,17 @@ MA.quiz = (function () {
 
   function hideQuestion() {
     $("question-live").hidden = true;
-    $("question-hidden").hidden = false;
+    $("question-hidden").hidden = true; // no Start button yet — nothing to prompt
     const feedback = $("answer-feedback");
     if (feedback) { feedback.textContent = ""; feedback.className = "answer-feedback"; }
   }
 
+  // Reveals the "press Start" lock prompt — call only once the Start button
+  // is actually on screen (see js/engine.js), so the two always agree.
+  function showLockedPrompt() { $("question-hidden").hidden = false; }
+
   // Reveal the correct answer without any interaction (used for the "skip" effect)
   function forceReveal(q) { revealAnswer(q, -1); }
 
-  return { showQuestion, startTimer, stopTimer, resetTimerDisplay, hideQuestion, forceReveal };
+  return { showQuestion, startTimer, stopTimer, resetTimerDisplay, hideQuestion, showLockedPrompt, forceReveal };
 })();
