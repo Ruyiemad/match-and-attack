@@ -1,3 +1,6 @@
 # Personal reference photos (not used by the game, kept local only)
 WhatsApp Image*.jpeg
 WhatsApp Image*.jpg
+
+# Machine-specific tool permissions (the dev-server config is shared)
+.claude/settings.local.json

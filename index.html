@@ -66,7 +66,56 @@
       </div>
     </section>
 
-    <!-- ===================== 3) RANDOMIZER ===================== -->
+    <!-- ================ 3) HOW TO PLAY (brief + visuals) ================ -->
+    <section id="screen-howto" class="screen">
+      <h1 class="screen-title" data-txt="howtoHeading"></h1>
+
+      <div class="panel howto">
+        <p class="howto-intro" data-txt="howtoIntro"></p>
+
+        <!-- The two card types, drawn exactly like the real board cards -->
+        <div class="howto-cards">
+          <figure class="howto-card">
+            <div class="card-front attack howto-face">
+              <div class="cf-icon">⚠️</div>
+              <div class="cf-title">REELS</div>
+              <div class="cf-desc">سوشيال ميديا ومقارنات</div>
+            </div>
+            <figcaption>
+              <strong data-txt="howtoAttackTitle"></strong>
+              <span data-txt="howtoAttackDesc"></span>
+            </figcaption>
+          </figure>
+
+          <div class="howto-vs" aria-hidden="true">⚔️</div>
+
+          <figure class="howto-card">
+            <div class="card-front defend howto-face">
+              <div class="cf-tagline">DIGITAL DETOX</div>
+              <div class="cf-icon">🛡️</div>
+              <div class="cf-cue">امتحن عملك أنت</div>
+              <div class="cf-ref">غلاطية ٦:٤-٥</div>
+            </div>
+            <figcaption>
+              <strong data-txt="howtoDefendTitle"></strong>
+              <span data-txt="howtoDefendDesc"></span>
+            </figcaption>
+          </figure>
+        </div>
+
+        <ol class="howto-steps">
+          <li data-txt="howtoStep1"></li>
+          <li data-txt="howtoStep2"></li>
+          <li data-txt="howtoStep3"></li>
+          <li data-txt="howtoStep4"></li>
+        </ol>
+
+        <p class="howto-end" data-txt="howtoEnd"></p>
+        <button id="btn-howto" class="btn btn-primary btn-lg"></button>
+      </div>
+    </section>
+
+    <!-- ===================== 4) RANDOMIZER ===================== -->
     <section id="screen-randomizer" class="screen">
       <h1 class="screen-title" data-txt="randomizerHeading"></h1>
       <div class="randomizer">
@@ -80,40 +129,62 @@
       <button id="btn-start-playing" class="btn btn-primary btn-lg" hidden></button>
     </section>
 
-    <!-- ===================== 4) GAME BOARD ===================== -->
+    <!-- ===================== 5) GAME BOARD ===================== -->
     <section id="screen-board" class="screen">
       <!-- HUD: scoreboard + progress + timer (always visible) -->
       <header id="hud" class="hud">
         <div id="scoreboard" class="scoreboard"></div>
         <div class="hud-right">
           <div id="progress" class="progress"></div>
-          <div id="timer" class="timer" data-state="idle">
-            <svg viewBox="0 0 100 100" class="timer-ring">
-              <circle class="timer-track" cx="50" cy="50" r="44"></circle>
-              <circle id="timer-arc" class="timer-arc" cx="50" cy="50" r="44"></circle>
-            </svg>
-            <span id="timer-text" class="timer-text">–</span>
+          <div class="timer-wrap">
+            <span class="timer-label" data-txt="timerLabel"></span>
+            <div id="timer" class="timer" data-state="idle">
+              <svg viewBox="0 0 100 100" class="timer-ring">
+                <circle class="timer-track" cx="50" cy="50" r="44"></circle>
+                <circle id="timer-arc" class="timer-arc" cx="50" cy="50" r="44"></circle>
+              </svg>
+              <span id="timer-text" class="timer-text">–</span>
+            </div>
           </div>
         </div>
       </header>
-
-      <!-- Phase banner (Arabic instructions to the room) -->
-      <div id="phase-banner" class="phase-banner"></div>
 
       <!-- Full verse reveal (shown when an attack is blocked or lands) -->
       <div id="verse-reveal" class="verse-reveal" hidden></div>
 
       <div class="board-layout">
-        <!-- RIGHT (first in RTL): Question -->
+        <!-- RIGHT (first in RTL): everything about "what happens now" lives
+             in ONE box, top to bottom: who's who -> what's happening ->
+             the one button to press -> the question -> Next. -->
         <div id="question-panel" class="question-panel">
-          <div id="question-hidden" class="question-hidden">
-            <span class="q-lock">🔒</span>
-            <p data-txt="questionHidden"></p>
+          <!-- 1) Who does what right now: a colored circle per team + its role -->
+          <div id="turn-roles" class="turn-roles" hidden></div>
+
+          <!-- 2) What's happening right now (moved here from the old sticky
+               strip above the board, so it's part of the same box) -->
+          <div id="phase-banner" class="phase-banner"></div>
+
+          <div class="q-body">
+            <!-- Only ever shown together with the Start button below it —
+                 no point telling the room to press Start when it's not there. -->
+            <div id="question-hidden" class="question-hidden" hidden>
+              <span class="q-lock">🔒</span>
+              <p data-txt="questionHidden"></p>
+            </div>
+            <div id="question-live" class="question-live" hidden>
+              <p id="question-text" class="question-text"></p>
+              <div id="answers" class="answers"></div>
+              <p id="answer-feedback" class="answer-feedback"></p>
+            </div>
           </div>
-          <div id="question-live" class="question-live" hidden>
-            <p id="question-text" class="question-text"></p>
-            <div id="answers" class="answers"></div>
-            <p id="answer-feedback" class="answer-feedback"></p>
+
+          <!-- 3/4) The single relevant action button (Skip Attack / Start / Next).
+               No separate "pending effect" note — the punishment is already
+               spelled out in the phase banner above. -->
+          <div class="panel-actions">
+            <button id="btn-skip-attack" class="btn btn-ghost"></button>
+            <button id="btn-start-question" class="btn btn-primary btn-lg"></button>
+            <button id="btn-next" class="btn btn-secondary btn-lg" hidden></button>
           </div>
         </div>
 
@@ -124,16 +195,13 @@
         </div>
       </div>
 
-      <!-- Facilitator controls -->
+      <!-- Facilitator-only override, unrelated to the turn flow above -->
       <div class="board-controls">
-        <button id="btn-skip-attack" class="btn btn-ghost"></button>
-        <button id="btn-start-question" class="btn btn-primary"></button>
-        <button id="btn-next" class="btn btn-secondary" hidden></button>
         <button id="btn-end-game" class="btn btn-ghost btn-danger"></button>
       </div>
     </section>
 
-    <!-- ===================== 5) RESULTS ===================== -->
+    <!-- ===================== 6) RESULTS ===================== -->
     <section id="screen-results" class="screen">
       <h1 class="screen-title" data-txt="resultsHeading"></h1>
       <div id="winner-line" class="winner-line"></div>

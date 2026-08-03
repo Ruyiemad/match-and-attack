@@ -51,6 +51,7 @@ function applyStaticText() {
   const L = CONFIG.labels;
   setText("btn-start-game", L.startGame);
   setText("btn-continue", L.continue);
+  setText("btn-howto", L.howto);
   setText("btn-start-playing", L.startPlaying);
   setText("btn-start-question", L.start);
   setText("btn-next", L.next);
@@ -87,8 +88,7 @@ function onContinue() {
 
   MA.state.teams.forEach((t, i) => { t.name = names[i]; });
   MA.audio.play("click");
-  MA.ui.showScreen("randomizer");
-  runRandomizer();
+  MA.ui.showScreen("howto"); // brief the room on the rules before the wheel
 }
 
 /* --------------------------- randomizer ------------------------------- */
@@ -143,6 +143,7 @@ MA.ui.confetti = function () {
 function wireEvents() {
   on("btn-start-game", () => { MA.audio.play("click"); MA.ui.showScreen("setup"); });
   on("btn-continue", onContinue);
+  on("btn-howto", () => { MA.audio.play("click"); MA.ui.showScreen("randomizer"); runRandomizer(); });
   on("btn-start-playing", () => { MA.audio.play("click"); MA.ui.showScreen("board"); MA.engine.startGame(); });
   on("btn-start-question", () => { MA.audio.play("click"); MA.engine.beginQuestion(); });
   on("btn-next", () => { MA.audio.play("click"); MA.engine.nextTurn(); });

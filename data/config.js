@@ -34,10 +34,10 @@ window.CONFIG = {
     { name: "Green",  hex: "#22c55e" }
   ],
 
-  /* When all 5 pairs on the board are matched, reshuffle the cards to keep
-     playing. Set to false to instead stop offering attacks once the board
-     is fully matched. */
-  reshuffleOnEmpty: true,
+  /* When all 5 pairs on the board are matched, reshuffle and keep playing.
+     Left false so the game ENDS once the whole board is matched (or when
+     the questions run out, whichever happens first). */
+  reshuffleOnEmpty: false,
 
   /* Sound effects on/off (can also be toggled with the speaker button) */
   sound: true,
@@ -46,6 +46,7 @@ window.CONFIG = {
   labels: {
     startGame: "Start Game",
     continue: "Continue",
+    howto: "Got it!",
     startPlaying: "Start Playing",
     start: "Start",
     next: "Next",
@@ -68,6 +69,19 @@ window.TXT = {
   setupPlaceholder: "اسم الفريق",
   setupError: "الرجاء إدخال اسم لكل فريق (بدون تكرار).",
 
+  /* --- "How to play" briefing screen (shown after the team names) --- */
+  howtoHeading: "إزاي نلعب؟",
+  howtoIntro: "اللعبة دي عن «المشتّتات» — الحاجات اللي بتسحب تركيزنا بعيد عن هدفنا. كل جولة فيها سؤال، بس قبل ما تجاوب لازم تعدّي من الكروت الأول!",
+  howtoAttackTitle: "كارت مشتّت (أحمر)",
+  howtoAttackDesc: "بيهاجم الفريق اللي عليه الدور",
+  howtoDefendTitle: "كارت حل (أخضر)",
+  howtoDefendDesc: "بيصدّ المشتّت المطابق ليه",
+  howtoStep1: "كل جولة، فريق تاني بيهاجم: بيقلب كارت واحد من على الطاولة.",
+  howtoStep2: "لو الكارت طلع أخضر (حل) — مفيش هجوم، والسؤال بيبدأ على طول.",
+  howtoStep3: "لو طلع كارت مشتّت أحمر — الفريق اللي عليه الدور لازم يقلب كارت الحل الأخضر المطابق ليه من الكروت المقلوبة.",
+  howtoStep4: "طابقه صح؟ الهجوم اتصدّ والكارتين يتقفلوا. غلط؟ الفريق ياخد عقاب: نقاط أقل، وقت أقل، أو السؤال يروح للفريق المهاجم.",
+  howtoEnd: "🎯 اللعبة بتخلص لما كل الكروت تتطابق وتتقفل — أعلى نقاط يكسب!",
+
   randomizerHeading: "من يبدأ أولاً؟",
   randomizerSpinning: "جارٍ تحديد ترتيب اللعب…",
   randomizerDone: "ترتيب اللعب",
@@ -89,15 +103,33 @@ window.TXT = {
   effectCut: "وقت السؤال يُخفّض إلى النصف.",
   effectHalf: "نقاط السؤال تُخفّض إلى النصف.",
 
+  /* Role captions under the colored circles inside the question box */
+  roleWillAnswer: "سيجيب عن السؤال",
+  roleAnswering: "يجيب عن السؤال الآن",
+  rolePickAttack: "يختار بطاقة الهجوم الآن",
+  rolePickDefend: "يختار بطاقة الحل للدفاع",
+  roleAttacking: "هاجم هذا الدور",
+  roleLostQuestion: "فقد السؤال بسبب الهجوم",
+
+  // Only ever shown while the Start button is also on screen (see js/engine.js)
   questionHidden: "اضغط Start لعرض السؤال وبدء الوقت",
+  timerLabel: "⏱️ الوقت المتبقي",
   questionSkipped: "تم تخطّي السؤال بسبب المشتّت — الإجابة الصحيحة موضّحة بالأسفل.",
   answerCorrect: "إجابة صحيحة! ‎+{n}",
   answerWrong: "إجابة خاطئة",
   timeUp: "انتهى الوقت!",
   answeringNow: "يُجيب الآن: فريق {team}",
 
+  /* Center-screen toast when a card attack lands (defense failed) */
+  punishTitle: "لم تُصدّ هذه البطاقة! 💥",
+  punishBody: "لأن الفريق لم يجد الحل الصحيح لهذه البطاقة، سيُطبَّق هذا العقاب:",
+  closeLabel: "إغلاق",
+
   progressLabel: "السؤال {i} من {n}",
   resultsHeading: "النتائج النهائية",
   winnerLabel: "🏆 الفائز: فريق {team}",
+  /* Teams on equal points share the same place — no invented tie-breaker */
+  winnerTieLabel: "🏆 تعادل في المركز الأول: {teams}",
+  tieJoiner: " و ",
   reduceMotionNote: ""
 };
