@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Match &amp; Attack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Baloo+2:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <!-- ================= Ambient airplane-mode sky ================= -->
+  <div class="sky" aria-hidden="true">
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="cloud cloud-3"></div>
+    <div class="cloud cloud-4"></div>
+    <div class="horizon"></div>
+  </div>
+
+  <!-- Sound toggle (always available) -->
+  <button id="btn-sound" class="sound-toggle" title="Sound" aria-label="Sound">🔊</button>
+
+  <main id="app">
+
+    <!-- ===================== 1) WELCOME ===================== -->
+    <section id="screen-welcome" class="screen is-active">
+
+      <!-- Hero image. Drop your file at assets/welcome.png (or .jpg).
+           If it's missing, a text logo fallback shows instead. -->
+      <img id="hero-img" class="hero-img" src="assets/welcome.png" alt="Match & Attack" data-tried="0"
+           onerror="if(this.dataset.tried==='0'){this.dataset.tried='1';this.src='assets/welcome.jpg';}else{this.classList.add('missing');var f=document.getElementById('hero-fallback');if(f)f.hidden=false;}" />
+
+      <div id="hero-fallback" class="hero-fallback" hidden aria-hidden="true">
+        <div class="logo">
+          <span class="logo-main">Match <em>&amp;</em> Attack</span>
+          <span class="logo-badge">Airplane&nbsp;Mode</span>
+        </div>
+      </div>
+
+      <!-- twinkling sparkles animated on top of the image -->
+      <div class="hero-sparkles" aria-hidden="true">
+        <i style="--x:22%;--y:30%;--s:14px;--d:0s"></i>
+        <i style="--x:34%;--y:58%;--s:10px;--d:.6s"></i>
+        <i style="--x:48%;--y:20%;--s:12px;--d:1.2s"></i>
+        <i style="--x:63%;--y:52%;--s:9px;--d:.3s"></i>
+        <i style="--x:72%;--y:28%;--s:13px;--d:1.6s"></i>
+        <i style="--x:80%;--y:60%;--s:10px;--d:.9s"></i>
+        <i style="--x:15%;--y:66%;--s:8px;--d:1.9s"></i>
+        <i style="--x:57%;--y:72%;--s:11px;--d:.45s"></i>
+      </div>
+
+      <div class="welcome-inner">
+        <button id="btn-start-game" class="btn btn-primary btn-xl"></button>
+      </div>
+    </section>
+
+    <!-- ===================== 2) TEAM SETUP ===================== -->
+    <section id="screen-setup" class="screen">
+      <div class="panel">
+        <h1 class="panel-title" data-txt="setupHeading"></h1>
+        <div id="team-inputs" class="team-inputs"></div>
+        <p id="setup-error" class="form-error" data-txt="setupError" hidden></p>
+        <button id="btn-continue" class="btn btn-primary btn-lg"></button>
+      </div>
+    </section>
+
+    <!-- ===================== 3) RANDOMIZER ===================== -->
+    <section id="screen-randomizer" class="screen">
+      <h1 class="screen-title" data-txt="randomizerHeading"></h1>
+      <div class="randomizer">
+        <div id="wheel" class="wheel">
+          <div class="wheel-hub">✈️</div>
+        </div>
+        <div class="wheel-pointer">▲</div>
+      </div>
+      <p id="randomizer-status" class="randomizer-status"></p>
+      <ol id="order-result" class="order-result"></ol>
+      <button id="btn-start-playing" class="btn btn-primary btn-lg" hidden></button>
+    </section>
+
+    <!-- ===================== 4) GAME BOARD ===================== -->
+    <section id="screen-board" class="screen">
+      <!-- HUD: scoreboard + progress + timer (always visible) -->
+      <header id="hud" class="hud">
+        <div id="scoreboard" class="scoreboard"></div>
+        <div class="hud-right">
+          <div id="progress" class="progress"></div>
+          <div id="timer" class="timer" data-state="idle">
+            <svg viewBox="0 0 100 100" class="timer-ring">
+              <circle class="timer-track" cx="50" cy="50" r="44"></circle>
+              <circle id="timer-arc" class="timer-arc" cx="50" cy="50" r="44"></circle>
+            </svg>
+            <span id="timer-text" class="timer-text">–</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Phase banner (Arabic instructions to the room) -->
+      <div id="phase-banner" class="phase-banner"></div>
+
+      <!-- Full verse reveal (shown when an attack is blocked or lands) -->
+      <div id="verse-reveal" class="verse-reveal" hidden></div>
+
+      <div class="board-layout">
+        <!-- RIGHT (first in RTL): Question -->
+        <div id="question-panel" class="question-panel">
+          <div id="question-hidden" class="question-hidden">
+            <span class="q-lock">🔒</span>
+            <p data-txt="questionHidden"></p>
+          </div>
+          <div id="question-live" class="question-live" hidden>
+            <p id="question-text" class="question-text"></p>
+            <div id="answers" class="answers"></div>
+            <p id="answer-feedback" class="answer-feedback"></p>
+          </div>
+        </div>
+
+        <!-- LEFT: Flip & Match board -->
+        <div class="board-side">
+          <h2 class="board-heading">🃏 المشتّتات والحلول</h2>
+          <div id="card-board" class="card-board"></div>
+        </div>
+      </div>
+
+      <!-- Facilitator controls -->
+      <div class="board-controls">
+        <button id="btn-skip-attack" class="btn btn-ghost"></button>
+        <button id="btn-start-question" class="btn btn-primary"></button>
+        <button id="btn-next" class="btn btn-secondary" hidden></button>
+        <button id="btn-end-game" class="btn btn-ghost btn-danger"></button>
+      </div>
+    </section>
+
+    <!-- ===================== 5) RESULTS ===================== -->
+    <section id="screen-results" class="screen">
+      <h1 class="screen-title" data-txt="resultsHeading"></h1>
+      <div id="winner-line" class="winner-line"></div>
+      <ol id="podium" class="podium"></ol>
+      <button id="btn-play-again" class="btn btn-primary btn-lg"></button>
+      <div id="confetti" class="confetti" aria-hidden="true"></div>
+    </section>
+
+  </main>
+
+  <!-- Data (edit these to change content) -->
+  <script src="data/config.js"></script>
+  <script src="data/questions.js"></script>
+  <script src="data/cards.js"></script>
+
+  <!-- Game code -->
+  <script src="js/audio.js"></script>
+  <script src="js/wheel.js"></script>
+  <script src="js/board.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
